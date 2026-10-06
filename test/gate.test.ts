@@ -316,3 +316,34 @@ test("[T] task tool registers with bounded schema; list truncates explicitly", a
   assert.match(list.content[0]!.text, /older tasks omitted/, "explicit truncation, never silent");
   h.cleanup();
 });
+
+test("[T-promote] pinx.github.mutation completion marks the local issue candidate promoted", async () => {
+  const h = harness();
+  await h.dispatch("session_start", { reason: "startup" });
+  const issueTool = h.registeredTools.find((t) => t.name === "issue_candidate") as never as {
+    execute: (id: unknown, params: unknown) => Promise<{ content: Array<{ text: string }> }>;
+  };
+  assert.ok(issueTool, "issue tool present");
+  const added = await issueTool.execute(undefined, {
+    action: "add",
+    title: "Flaky windows test",
+    description: "Timer race in soak",
+  });
+  const idMatch = /(issue_[a-z0-9_]+)/.exec(added.content[0]!.text);
+  assert.ok(idMatch, `issue id in response: ${added.content[0]!.text}`);
+  const candidateId = idMatch[1]!;
+
+  // simulate pi-github-next's completed create_issue mutation event
+  h.emitBus("pinx.github.mutation", {
+    v: 1,
+    operationId: "op_abc",
+    operation: "create_issue",
+    repository: "o/r",
+    state: "completed",
+    resultRef: "gh:issue:o/r#73",
+    issueCandidateId: candidateId,
+  });
+  const list = await issueTool.execute(undefined, { action: "list" });
+  assert.match(list.content[0]!.text, /•/, "candidate shows promoted state");
+  h.cleanup();
+});

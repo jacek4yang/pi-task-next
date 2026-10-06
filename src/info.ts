@@ -18,6 +18,7 @@ export const STACK_INFO = {
   consumed: {
     jobTerminal: "pinx.runtime.job", // pi-code-runtime-next (CONTRACTS §9)
     policyDecision: "pinx.policy.decision", // pi-policy-next (CONTRACTS §8)
+    githubMutation: "pinx.github.mutation", // pi-github-next (CONTRACTS §11)
   },
   tool: {
     name: "task",

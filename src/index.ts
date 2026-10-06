@@ -488,6 +488,25 @@ export default function piTaskNext(pi: ExtensionAPI) {
 
   // -- status command (UI-only; health never enters model context) -----------
 
+  // Issue-candidate promotion boundary (CONTRACTS §11): pi-github-next
+  // emits pinx.github.mutation for a completed create_issue carrying the
+  // local candidate id; we mark OUR candidate promoted. Task state owns
+  // the candidate; GitHub owns the external resource — refs only.
+  pi.events.on(STACK_INFO.consumed.githubMutation, (payload) => {
+    const event = payload as {
+      v?: number;
+      operation?: string;
+      state?: string;
+      issueCandidateId?: string;
+      resultRef?: string;
+    };
+    if (event?.v !== 1 || event.operation !== "create_issue" || event.state !== "completed") return;
+    if (typeof event.issueCandidateId !== "string") return;
+    void issues.markPromoted(event.issueCandidateId).catch(() => {
+      // unknown candidate id: promotion race — ignore, journal is truth
+    });
+  });
+
   pi.registerCommand("task-next", {
     description: "Show pi-task-next health and active tasks",
     handler: async (_args, ctx) => {
