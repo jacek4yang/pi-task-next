@@ -488,6 +488,36 @@ export default function piTaskNext(pi: ExtensionAPI) {
 
   // -- status command (UI-only; health never enters model context) -----------
 
+  // CI waiting resolution (CONTRACTS §13): pi-ci-next emits
+  // pinx.ci.terminal when a watched run reaches terminal state; tasks
+  // waiting(kind=ci, watchId) resume — success → actionable, failure →
+  // blocked WITH the watch/failure ref. Never task-done on CI success.
+  pi.events.on(STACK_INFO.consumed.ciTerminal, (payload) => {
+    const event = payload as { v?: number; watchId?: string; state?: string; resultRef?: string };
+    if (event?.v !== 1 || typeof event.watchId !== "string" || !event.state) return;
+    for (const task of store.open()) {
+      if (
+        task.state !== "waiting" ||
+        task.waiting?.kind !== "ci" ||
+        task.waiting.watchId !== event.watchId
+      ) {
+        continue;
+      }
+      const outcome = event.state === "success" ? "ready" : "blocked";
+      try {
+        commit({
+          kind: "waiting-resolved",
+          id: task.id,
+          expectedRevision: task.revision,
+          outcome,
+          detail: `ci ${event.state}${event.resultRef ? ` (${event.resultRef})` : ""}`,
+        });
+      } catch {
+        // concurrent tool call raced us; the terminal event remains queryable
+      }
+    }
+  });
+
   // Issue-candidate promotion boundary (CONTRACTS §11): pi-github-next
   // emits pinx.github.mutation for a completed create_issue carrying the
   // local candidate id; we mark OUR candidate promoted. Task state owns

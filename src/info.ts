@@ -19,6 +19,7 @@ export const STACK_INFO = {
     jobTerminal: "pinx.runtime.job", // pi-code-runtime-next (CONTRACTS §9)
     policyDecision: "pinx.policy.decision", // pi-policy-next (CONTRACTS §8)
     githubMutation: "pinx.github.mutation", // pi-github-next (CONTRACTS §11)
+    ciTerminal: "pinx.ci.terminal", // pi-ci-next (CONTRACTS §13)
   },
   tool: {
     name: "task",

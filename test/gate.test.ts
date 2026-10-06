@@ -347,3 +347,24 @@ test("[T-promote] pinx.github.mutation completion marks the local issue candidat
   assert.match(list.content[0]!.text, /•/, "candidate shows promoted state");
   h.cleanup();
 });
+
+test("[T-ci] pinx.ci.terminal resolves waiting(ci) tasks; failure blocks with ref", async () => {
+  const h = harness();
+  await h.dispatch("session_start", { reason: "startup" });
+  const tool = taskTool(h);
+  const display = await createTask(h, "Ship after CI");
+  await tool.execute(undefined, { action: "start", task: display });
+  await tool.execute(undefined, { action: "wait", task: display, kind: "ci", ref: "watch_77" });
+  h.emitBus("pinx.ci.terminal", {
+    v: 1,
+    watchId: "watch_77",
+    state: "failure",
+    resultRef: "gh:run:o/r#123",
+  });
+  const got = (await tool.execute(undefined, { action: "get", task: display })) as {
+    content: Array<{ text: string }>;
+  };
+  assert.match(got.content[0]!.text, /blocked/);
+  assert.match(got.content[0]!.text, /failure/);
+  h.cleanup();
+});
