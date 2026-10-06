@@ -46,11 +46,13 @@ export function validateIssue(issue: IssueCandidate): void {
 export class IssueStore {
   private issues: IssueCandidate[] = [];
   degraded: string | undefined;
+  private readonly path: string;
+  private readonly now: () => number;
 
-  constructor(
-    private readonly path: string,
-    private readonly now: () => number = Date.now,
-  ) {}
+  constructor(path: string, now: () => number = Date.now) {
+    this.path = path;
+    this.now = now;
+  }
 
   async load(): Promise<void> {
     let raw: string;

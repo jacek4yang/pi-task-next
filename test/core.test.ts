@@ -9,8 +9,7 @@ import { renderProjection, projectionBytes, projectionTasks } from "../src/core/
 import { IssueStore } from "../src/core/issues.ts";
 import type { Task, TaskCheckpoint, TaskMutation } from "../src/core/types.ts";
 
-let clock = 1_700_000_000_000;
-void clock;
+const clock = 1_700_000_000_000;
 const NOW = () => clock;
 
 function freshStore(): TaskStore {

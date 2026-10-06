@@ -9,7 +9,14 @@
 // referenced by a live parent/dependency/checkpoint (§36).
 
 import { assertTransition, isTerminal, taskError } from "./machine.ts";
-import type { Task, TaskCheckpoint, TaskError, TaskHealth, TaskMutation, TaskState } from "./types.ts";
+import type {
+  Task,
+  TaskCheckpoint,
+  TaskError,
+  TaskHealth,
+  TaskMutation,
+  TaskState,
+} from "./types.ts";
 import { STACK_INFO } from "../info.ts";
 
 const Q = STACK_INFO.quotas;
@@ -35,8 +42,11 @@ export class TaskStore {
   /** Set when replay hit a corrupt/incompatible record (T6: fail closed). */
   degraded: string | undefined;
   private seq = 0;
+  private readonly now: () => number;
 
-  constructor(private readonly now: () => number = Date.now) {}
+  constructor(now: () => number = Date.now) {
+    this.now = now;
+  }
 
   // -- replay ---------------------------------------------------------------
 
